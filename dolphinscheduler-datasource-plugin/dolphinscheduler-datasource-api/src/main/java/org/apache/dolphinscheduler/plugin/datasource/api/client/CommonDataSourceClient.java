@@ -50,7 +50,7 @@ public class CommonDataSourceClient implements DataSourceClient {
     public CommonDataSourceClient(BaseConnectionParam baseConnectionParam, DbType dbType) {
         this.baseConnectionParam = baseConnectionParam;
         preInit();
-        checkEnv(baseConnectionParam);
+        checkEnv(baseConnectionParam, dbType);
         initClient(baseConnectionParam, dbType);
         checkClient();
     }
@@ -64,6 +64,11 @@ public class CommonDataSourceClient implements DataSourceClient {
         checkUser(baseConnectionParam);
     }
 
+    protected void checkEnv(BaseConnectionParam baseConnectionParam, DbType dbType) {
+        checkValidationQuery(baseConnectionParam);
+        checkUser(baseConnectionParam, dbType);
+    }
+
     protected void initClient(BaseConnectionParam baseConnectionParam, DbType dbType) {
         this.dataSource = JdbcDataSourceProvider.createJdbcDataSource(baseConnectionParam, dbType);
         this.jdbcTemplate = new JdbcTemplate(dataSource);
@@ -75,6 +80,17 @@ public class CommonDataSourceClient implements DataSourceClient {
         }
         if (StringUtils.isBlank(baseConnectionParam.getPassword())) {
             setDefaultPassword(baseConnectionParam);
+        }
+    }
+
+    protected void checkUser(BaseConnectionParam baseConnectionParam, DbType dbType) {
+        if (StringUtils.isBlank(baseConnectionParam.getUser())) {
+            setDefaultUsername(baseConnectionParam);
+        }
+        if (StringUtils.isBlank(baseConnectionParam.getPassword())) {
+            if (!DbType.PRESTO.equals(dbType)) {
+                setDefaultPassword(baseConnectionParam);
+            }
         }
     }
 
